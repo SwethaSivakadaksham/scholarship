@@ -147,7 +147,8 @@ if choice == "Login":
             st.success(f"Welcome, {username}!")
             st.session_state["logged_in"] = True
             st.session_state["username"] = username
-            st.session_state["redirect"] = "Enter Details"  # Set the redirect page in session state
+            st.session_state["page"] = "Enter Details"  # Set the page to Enter Details after login
+            st.experimental_rerun()  # Automatically go to the next page
         else:
             st.error("Invalid username or password")
 
@@ -176,9 +177,10 @@ elif choice == "Enter Details":
         if st.button("Save Details"):
             save_student_details(st.session_state["username"], age, gender, category, percentage)
             st.success("Details saved successfully!")
-            st.session_state["redirect"] = "Find Scholarships"  # Set the redirect page
-        else:
-            st.warning("Please log in to enter details.")
+            st.session_state["page"] = "Find Scholarships"  # Set the page to Find Scholarships after saving details
+            st.experimental_rerun()  # Automatically go to the next page
+    else:
+        st.warning("Please log in to enter details.")
 
 # Scholarship Display Page
 elif choice == "Find Scholarships":
@@ -194,10 +196,3 @@ elif choice == "Find Scholarships":
             st.warning("No scholarships found for your criteria.")
     else:
         st.warning("Please log in to find scholarships.")
-
-# Automatic redirection after login or saving details
-if "redirect" in st.session_state:
-    if st.session_state["redirect"] == "Enter Details":
-        st.experimental_rerun()
-    elif st.session_state["redirect"] == "Find Scholarships":
-        st.experimental_rerun()
