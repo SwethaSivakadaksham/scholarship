@@ -7,8 +7,9 @@ import pandas as pd
 def create_tables():
     try:
         conn = sqlite3.connect("scholarship_finder.db")
+        conn.execute("PRAGMA journal_mode=WAL;")  # Set journal mode for better concurrency
         cursor = conn.cursor()
-
+        
         # User table
         cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,6 +46,7 @@ def hash_password(password):
 def register_user(username, password):
     try:
         conn = sqlite3.connect("scholarship_finder.db")
+        conn.execute("PRAGMA journal_mode=WAL;")
         cursor = conn.cursor()
         cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, hash_password(password)))
         conn.commit()
@@ -53,83 +55,68 @@ def register_user(username, password):
     except sqlite3.IntegrityError:
         conn.close()
         return False
-    except sqlite3.OperationalError as e:
-        st.error(f"Error during registration: {e}")
-        return False
 
 # Function to check login
 def check_login(username, password):
-    try:
-        conn = sqlite3.connect("scholarship_finder.db")
-        cursor = conn.cursor()
-        cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
-        stored_password = cursor.fetchone()
-        conn.close()
+    conn = sqlite3.connect("scholarship_finder.db")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    cursor = conn.cursor()
+    cursor.execute("SELECT password FROM users WHERE username = ?", (username,))
+    stored_password = cursor.fetchone()
+    conn.close()
 
-        if stored_password and stored_password[0] == hash_password(password):
-            return True
-        return False
-    except sqlite3.OperationalError as e:
-        st.error(f"Database error during login check: {e}")
-        return False
+    if stored_password and stored_password[0] == hash_password(password):
+        return True
+    return False
 
 # Function to save student details
 def save_student_details(username, age, gender, category, percentage):
-    try:
-        conn = sqlite3.connect("scholarship_finder.db")
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO student_details (username, age, gender, category, percentage) VALUES (?, ?, ?, ?, ?)", 
-                       (username, age, gender, category, percentage))
-        conn.commit()
-        conn.close()
-    except sqlite3.OperationalError as e:
-        st.error(f"Error saving student details: {e}")
+    conn = sqlite3.connect("scholarship_finder.db")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    cursor = conn.cursor()
+    cursor.execute("INSERT INTO student_details (username, age, gender, category, percentage) VALUES (?, ?, ?, ?, ?)", 
+                   (username, age, gender, category, percentage))
+    conn.commit()
+    conn.close()
 
 # Function to fetch eligible scholarships
 def get_eligible_scholarships(username):
-    try:
-        conn = sqlite3.connect("scholarship_finder.db")
-        cursor = conn.cursor()
+    conn = sqlite3.connect("scholarship_finder.db")
+    conn.execute("PRAGMA journal_mode=WAL;")
+    cursor = conn.cursor()
 
-        cursor.execute("SELECT category, percentage FROM student_details WHERE username = ?", (username,))
-        user_details = cursor.fetchone()
+    cursor.execute("SELECT category, percentage FROM student_details WHERE username = ?", (username,))
+    user_details = cursor.fetchone()
 
-        if user_details:
-            category, percentage = user_details
-            cursor.execute("SELECT name FROM scholarships WHERE category = ? AND min_percentage <= ?", (category, percentage))
-            scholarships = cursor.fetchall()
-            conn.close()
-            return [sch[0] for sch in scholarships]
-
+    if user_details:
+        category, percentage = user_details
+        cursor.execute("SELECT name FROM scholarships WHERE category = ? AND min_percentage <= ?", (category, percentage))
+        scholarships = cursor.fetchall()
         conn.close()
-        return []
-    except sqlite3.OperationalError as e:
-        st.error(f"Error fetching eligible scholarships: {e}")
-        return []
+        return [sch[0] for sch in scholarships]
+    
+    conn.close()
+    return []
 
-# Initialize DB and insert some sample scholarships
+# Initialize database with sample scholarships
 def initialize_data():
     try:
         conn = sqlite3.connect("scholarship_finder.db")
+        conn.execute("PRAGMA journal_mode=WAL;")
         cursor = conn.cursor()
 
-        # Insert sample scholarships only if they don't already exist
-        cursor.execute("SELECT COUNT(*) FROM scholarships")
-        count = cursor.fetchone()[0]
+        sample_scholarships = [
+            ("Merit Scholarship", 85, "General"),
+            ("SC/ST Special Scholarship", 60, "SC/ST"),
+            ("Girls Education Grant", 70, "Female"),
+            ("Minority Scholarship", 75, "OBC"),
+        ]
 
-        if count == 0:  # If no scholarships exist, insert sample data
-            sample_scholarships = [
-                ("Merit Scholarship", 85, "General"),
-                ("SC/ST Special Scholarship", 60, "SC/ST"),
-                ("Girls Education Grant", 70, "Female"),
-                ("Minority Scholarship", 75, "OBC"),
-            ]
-            cursor.executemany("INSERT INTO scholarships (name, min_percentage, category) VALUES (?, ?, ?)", sample_scholarships)
-            conn.commit()
-
+        cursor.executemany("INSERT INTO scholarships (name, min_percentage, category) VALUES (?, ?, ?)", sample_scholarships)
+        conn.commit()
         conn.close()
     except sqlite3.OperationalError as e:
-        st.error(f"Error initializing sample data: {e}")
+        st.error(f"Error initializing database: {e}")
 
 # Streamlit App
 st.set_page_config(page_title="Scholarship Finder", page_icon="🎓")
@@ -148,28 +135,9 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "username" not in st.session_state:
     st.session_state["username"] = ""
-if "next_page" not in st.session_state:
-    st.session_state["next_page"] = "Login"
 
-# Redirect to next page based on login status
-if st.session_state["logged_in"]:
-    # Check if user has entered details
-    conn = sqlite3.connect("scholarship_finder.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT * FROM student_details WHERE username = ?", (st.session_state["username"],))
-    student_details = cursor.fetchone()
-    conn.close()
-
-    # Set the next page based on student details
-    if not student_details:
-        st.session_state["next_page"] = "Enter Details"
-    else:
-        st.session_state["next_page"] = "Find Scholarships"
-
-# Handle page display
+# Login Page
 if choice == "Login":
-    if st.session_state["logged_in"]:
-        st.experimental_rerun()
     st.subheader("🔑 Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -179,11 +147,11 @@ if choice == "Login":
             st.success(f"Welcome, {username}!")
             st.session_state["logged_in"] = True
             st.session_state["username"] = username
-            st.session_state["next_page"] = "Enter Details"  # Automatically go to Enter Details
-            st.experimental_rerun()
+            st.experimental_rerun()  # Automatically go to the next page
         else:
             st.error("Invalid username or password")
 
+# Register Page
 elif choice == "Register":
     st.subheader("📝 Register")
     new_username = st.text_input("Choose a username")
@@ -195,6 +163,7 @@ elif choice == "Register":
         else:
             st.error("Username already exists. Try a different one.")
 
+# Student Details Page
 elif choice == "Enter Details":
     if st.session_state["logged_in"]:
         st.subheader("📝 Enter Student Details")
@@ -207,11 +176,11 @@ elif choice == "Enter Details":
         if st.button("Save Details"):
             save_student_details(st.session_state["username"], age, gender, category, percentage)
             st.success("Details saved successfully!")
-            st.session_state["next_page"] = "Find Scholarships"
-            st.experimental_rerun()
+            st.experimental_rerun()  # Automatically go to the next page after saving details
     else:
         st.warning("Please log in to enter details.")
 
+# Scholarship Display Page
 elif choice == "Find Scholarships":
     if st.session_state["logged_in"]:
         st.subheader("🎯 Eligible Scholarships")
