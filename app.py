@@ -126,7 +126,7 @@ initialize_data()
 st.title("🎓 Scholarship Finder")
 
 # Sidebar for navigation
-menu = ["Login", "Register", "Enter Details", "Find Scholarships"]
+menu = ["Register or Login", "Enter Details", "Find Scholarships"]
 choice = st.sidebar.selectbox("Menu", menu)
 
 # Session state to track user login
@@ -135,35 +135,34 @@ if "logged_in" not in st.session_state:
 if "username" not in st.session_state:
     st.session_state["username"] = ""
 if "page" not in st.session_state:
-    st.session_state["page"] = "Login"  # Default page is Login
+    st.session_state["page"] = "Register or Login"  # Default page is Register or Login
 
-# Login Page
-if st.session_state["page"] == "Login":
-    st.subheader("🔑 Login")
-    username = st.text_input("Username")
-    password = st.text_input("Password", type="password")
+# Register or Login Page
+if st.session_state["page"] == "Register or Login":
+    st.subheader("🔑 Register or Login")
+    choice = st.radio("Select Action", ("Register", "Login"))
 
-    if st.button("Login"):
-        if check_login(username, password):
-            st.success(f"Welcome, {username}!")
-            st.session_state["logged_in"] = True
-            st.session_state["username"] = username
-            st.session_state["page"] = "Enter Details"  # Move to Enter Details page
-        else:
-            st.error("Invalid username or password")
+    if choice == "Login":
+        username = st.text_input("Username")
+        password = st.text_input("Password", type="password")
 
-# Register Page
-elif st.session_state["page"] == "Register":
-    st.subheader("📝 Register")
-    new_username = st.text_input("Choose a username")
-    new_password = st.text_input("Choose a password", type="password")
+        if st.button("Login"):
+            if check_login(username, password):
+                st.success(f"Welcome, {username}!")
+                st.session_state["logged_in"] = True
+                st.session_state["username"] = username
+                st.session_state["page"] = "Enter Details"  # Move to Enter Details page
+            else:
+                st.error("Invalid username or password")
 
-    if st.button("Register"):
-        if register_user(new_username, new_password):
-            st.success("Account created! You can now log in.")
-            st.session_state["page"] = "Login"  # After register, redirect to Login
-        else:
-            st.error("Username already exists. Try a different one.")
+    elif choice == "Register":
+        new_username = st.text_input("Choose a username")
+        new_password = st.text_input("Choose a password", type="password")
+
+        if st.button("Register"):
+            if register_user(new_username, new_password):
+                st.success("Account created! You can now log in.")
+                st.session_state["page"] = "Register or Login"  # After register, stay on Register or Login page
 
 # Student Details Page
 elif st.session_state["page"] == "Enter Details":
