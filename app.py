@@ -1,7 +1,6 @@
 import streamlit as st
 import sqlite3
 import hashlib
-import pandas as pd
 
 # Function to create database tables
 def create_tables():
@@ -135,9 +134,11 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 if "username" not in st.session_state:
     st.session_state["username"] = ""
+if "page" not in st.session_state:
+    st.session_state["page"] = "Login"  # Default page is Login
 
 # Login Page
-if choice == "Login":
+if st.session_state["page"] == "Login":
     st.subheader("🔑 Login")
     username = st.text_input("Username")
     password = st.text_input("Password", type="password")
@@ -147,13 +148,12 @@ if choice == "Login":
             st.success(f"Welcome, {username}!")
             st.session_state["logged_in"] = True
             st.session_state["username"] = username
-            st.session_state["page"] = "Enter Details"  # Set the page to Enter Details after login
-            st.experimental_rerun()  # Automatically go to the next page
+            st.session_state["page"] = "Enter Details"  # Move to Enter Details page
         else:
             st.error("Invalid username or password")
 
 # Register Page
-elif choice == "Register":
+elif st.session_state["page"] == "Register":
     st.subheader("📝 Register")
     new_username = st.text_input("Choose a username")
     new_password = st.text_input("Choose a password", type="password")
@@ -161,11 +161,12 @@ elif choice == "Register":
     if st.button("Register"):
         if register_user(new_username, new_password):
             st.success("Account created! You can now log in.")
+            st.session_state["page"] = "Login"  # After register, redirect to Login
         else:
             st.error("Username already exists. Try a different one.")
 
 # Student Details Page
-elif choice == "Enter Details":
+elif st.session_state["page"] == "Enter Details":
     if st.session_state["logged_in"]:
         st.subheader("📝 Enter Student Details")
         
@@ -177,13 +178,12 @@ elif choice == "Enter Details":
         if st.button("Save Details"):
             save_student_details(st.session_state["username"], age, gender, category, percentage)
             st.success("Details saved successfully!")
-            st.session_state["page"] = "Find Scholarships"  # Set the page to Find Scholarships after saving details
-            st.experimental_rerun()  # Automatically go to the next page
+            st.session_state["page"] = "Find Scholarships"  # Move to Find Scholarships page
     else:
         st.warning("Please log in to enter details.")
 
 # Scholarship Display Page
-elif choice == "Find Scholarships":
+elif st.session_state["page"] == "Find Scholarships":
     if st.session_state["logged_in"]:
         st.subheader("🎯 Eligible Scholarships")
         scholarships = get_eligible_scholarships(st.session_state["username"])
