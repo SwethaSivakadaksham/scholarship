@@ -163,6 +163,9 @@ elif choice == "Enter Details":
         if st.button("Save Details"):
             save_student_details(st.session_state["username"], age, gender, category, percentage)
             st.success("Details saved successfully!")
+            
+            # Trigger page refresh to go to "Find Scholarships" page
+            st.experimental_rerun()
     else:
         st.warning("Please log in to enter details.")
 
@@ -180,4 +183,3 @@ elif choice == "Find Scholarships":
             st.warning("No scholarships found for your criteria.")
     else:
         st.warning("Please log in to find scholarships.")
- 
