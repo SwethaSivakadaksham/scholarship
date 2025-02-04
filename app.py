@@ -135,6 +135,21 @@ if choice == "Login":
             st.success(f"Welcome, {username}!")
             st.session_state["logged_in"] = True
             st.session_state["username"] = username
+
+            # Check if the user has entered their details
+            conn = sqlite3.connect("scholarship_finder.db")
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM student_details WHERE username = ?", (username,))
+            student_details = cursor.fetchone()
+            conn.close()
+
+            # Redirect to Enter Details page if details are missing
+            if not student_details:
+                st.session_state["next_page"] = "Enter Details"
+            else:
+                st.session_state["next_page"] = "Find Scholarships"
+
+            st.experimental_rerun()
         else:
             st.error("Invalid username or password")
 
@@ -150,7 +165,7 @@ elif choice == "Register":
         else:
             st.error("Username already exists. Try a different one.")
 
-# Student Details Page
+# Enter Details Page
 elif choice == "Enter Details":
     if st.session_state["logged_in"]:
         st.subheader("📝 Enter Student Details")
@@ -165,6 +180,7 @@ elif choice == "Enter Details":
             st.success("Details saved successfully!")
             
             # Trigger page refresh to go to "Find Scholarships" page
+            st.session_state["next_page"] = "Find Scholarships"
             st.experimental_rerun()
     else:
         st.warning("Please log in to enter details.")
