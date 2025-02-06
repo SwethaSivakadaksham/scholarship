@@ -125,10 +125,6 @@ initialize_data()
 
 st.title("🎓 Scholarship Finder")
 
-# Sidebar for navigation
-menu = ["Register or Login", "Enter Details", "Find Scholarships"]
-choice = st.sidebar.selectbox("Menu", menu)
-
 # Session state to track user login
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
@@ -151,7 +147,7 @@ if st.session_state["page"] == "Register or Login":
                 st.success(f"Welcome, {username}!")
                 st.session_state["logged_in"] = True
                 st.session_state["username"] = username
-                st.session_state["page"] = "Enter Details"  # Move to Enter Details page automatically
+                st.session_state["page"] = "Enter Details"  # Automatically move to Enter Details page
             else:
                 st.error("Invalid username or password")
 
@@ -164,25 +160,22 @@ if st.session_state["page"] == "Register or Login":
                 st.success("Account created! You can now log in.")
                 st.session_state["page"] = "Register or Login"  # After register, stay on Register or Login page
 
-# Student Details Page
-elif st.session_state["page"] == "Enter Details":
-    if st.session_state["logged_in"]:
-        st.subheader("📝 Enter Student Details")
-        
-        age = st.number_input("Age", min_value=15, max_value=30)
-        gender = st.selectbox("Gender", ["Male", "Female", "Other"])
-        category = st.selectbox("Category", ["General", "SC/ST", "OBC", "EWS"])
-        percentage = st.number_input("Percentage (%)", min_value=0.0, max_value=100.0)
+# Automatically transition to Student Details page if logged in
+if st.session_state["logged_in"] and st.session_state["page"] == "Enter Details":
+    st.subheader("📝 Enter Student Details")
+    
+    age = st.number_input("Age", min_value=15, max_value=30)
+    gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+    category = st.selectbox("Category", ["General", "SC/ST", "OBC", "EWS"])
+    percentage = st.number_input("Percentage (%)", min_value=0.0, max_value=100.0)
 
-        if st.button("Save Details"):
-            save_student_details(st.session_state["username"], age, gender, category, percentage)
-            st.success("Details saved successfully!")
-            st.session_state["page"] = "Find Scholarships"  # Move to Find Scholarships page automatically
-    else:
-        st.warning("Please log in to enter details.")
+    if st.button("Save Details"):
+        save_student_details(st.session_state["username"], age, gender, category, percentage)
+        st.success("Details saved successfully!")
+        st.session_state["page"] = "Find Scholarships"  # Automatically move to Find Scholarships page
 
 # Scholarship Display Page
-elif st.session_state["page"] == "Find Scholarships":
+if st.session_state["page"] == "Find Scholarships":
     if st.session_state["logged_in"]:
         st.subheader("🎯 Eligible Scholarships")
         scholarships = get_eligible_scholarships(st.session_state["username"])
