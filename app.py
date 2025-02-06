@@ -134,7 +134,7 @@ if "page" not in st.session_state:
     st.session_state["page"] = "Register or Login"  # Default page is Register or Login
 
 # Register or Login Page
-if st.session_state["page"] == "Register or Login":
+if st.session_state["logged_in"] == False:
     st.subheader("🔑 Register or Login")
     choice = st.radio("Select Action", ("Register", "Login"))
 
