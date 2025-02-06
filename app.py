@@ -151,7 +151,7 @@ if st.session_state["page"] == "Register or Login":
                 st.success(f"Welcome, {username}!")
                 st.session_state["logged_in"] = True
                 st.session_state["username"] = username
-                st.session_state["page"] = "Enter Details"  # Move to Enter Details page
+                st.session_state["page"] = "Enter Details"  # Move to Enter Details page automatically
             else:
                 st.error("Invalid username or password")
 
@@ -177,7 +177,7 @@ elif st.session_state["page"] == "Enter Details":
         if st.button("Save Details"):
             save_student_details(st.session_state["username"], age, gender, category, percentage)
             st.success("Details saved successfully!")
-            st.session_state["page"] = "Find Scholarships"  # Move to Find Scholarships page
+            st.session_state["page"] = "Find Scholarships"  # Move to Find Scholarships page automatically
     else:
         st.warning("Please log in to enter details.")
 
