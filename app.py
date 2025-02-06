@@ -8,7 +8,7 @@ def create_tables():
         conn = sqlite3.connect("scholarship_finder.db")
         conn.execute("PRAGMA journal_mode=WAL;")  # Set journal mode for better concurrency
         cursor = conn.cursor()
-        
+
         # User table
         cursor.execute('''CREATE TABLE IF NOT EXISTS users (
                             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,8 +133,8 @@ if "username" not in st.session_state:
 if "page" not in st.session_state:
     st.session_state["page"] = "Register or Login"  # Default page is Register or Login
 
-# Register or Login Page
-if st.session_state["logged_in"] == False:
+# Define pages
+def register_or_login():
     st.subheader("🔑 Register or Login")
     choice = st.radio("Select Action", ("Register", "Login"))
 
@@ -160,10 +160,8 @@ if st.session_state["logged_in"] == False:
                 st.success("Account created! You can now log in.")
                 st.session_state["page"] = "Register or Login"  # After register, stay on Register or Login page
 
-# Automatically transition to Student Details page if logged in
-if st.session_state["logged_in"] and st.session_state["page"] == "Enter Details":
+def enter_details():
     st.subheader("📝 Enter Student Details")
-    
     age = st.number_input("Age", min_value=15, max_value=30)
     gender = st.selectbox("Gender", ["Male", "Female", "Other"])
     category = st.selectbox("Category", ["General", "SC/ST", "OBC", "EWS"])
@@ -174,17 +172,23 @@ if st.session_state["logged_in"] and st.session_state["page"] == "Enter Details"
         st.success("Details saved successfully!")
         st.session_state["page"] = "Find Scholarships"  # Automatically move to Find Scholarships page
 
-# Scholarship Display Page
-if st.session_state["page"] == "Find Scholarships":
-    if st.session_state["logged_in"]:
-        st.subheader("🎯 Eligible Scholarships")
-        scholarships = get_eligible_scholarships(st.session_state["username"])
-        
-        if scholarships:
-            st.success("You are eligible for the following scholarships:")
-            for sch in scholarships:
-                st.write(f"- {sch}")
-        else:
-            st.warning("No scholarships found for your criteria.")
+def find_scholarships():
+    st.subheader("🎯 Eligible Scholarships")
+    scholarships = get_eligible_scholarships(st.session_state["username"])
+
+    if scholarships:
+        st.success("You are eligible for the following scholarships:")
+        for sch in scholarships:
+            st.write(f"- {sch}")
     else:
-        st.warning("Please log in to find scholarships.")
+        st.warning("No scholarships found for your criteria.")
+
+# Main logic to render pages based on session state
+if st.session_state["logged_in"] == False and st.session_state["page"] == "Register or Login":
+    register_or_login()
+
+elif st.session_state["logged_in"] == True and st.session_state["page"] == "Enter Details":
+    enter_details()
+
+elif st.session_state["logged_in"] == True and st.session_state["page"] == "Find Scholarships":
+    find_scholarships()
